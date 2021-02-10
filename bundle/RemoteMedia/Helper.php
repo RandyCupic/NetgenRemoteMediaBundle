@@ -70,6 +70,7 @@ class Helper
                 'filename' => $hit['public_id'],
                 'browse_url' => $browseUrl,
                 'url' => $value->secure_url,
+                'alt_text' => isset($hit['context']['alt_text']) ? $hit['context']['alt_text'] : '',
             ];
         }
 
