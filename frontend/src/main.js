@@ -52,7 +52,6 @@ const handleDOMContentLoaded = function() {
         },
         handleEditorInsertModalSave(){
           this.editorInsertModalLoading = true;
-          alert("test");
           this.editorInsertModalLoading = false;
           this.editorInsertModalOpen = false;
         }
