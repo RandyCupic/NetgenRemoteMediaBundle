@@ -9,15 +9,14 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Configuration extends SiteAccessConfiguration
+final class Configuration extends SiteAccessConfiguration
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('netgen_remote_media');
+        $treeBuilder = new TreeBuilder('netgen_remote_media');
+
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
 
         $this->addProviderSection($rootNode);
 
@@ -27,7 +26,7 @@ class Configuration extends SiteAccessConfiguration
         return $treeBuilder;
     }
 
-    protected function addProviderSection(ArrayNodeDefinition $rootNode)
+    protected function addProviderSection(ArrayNodeDefinition $rootNode): void
     {
         $rootNode
             ->children()
@@ -54,7 +53,7 @@ class Configuration extends SiteAccessConfiguration
             ->end();
     }
 
-    protected function addImageConfiguration(NodeBuilder $nodeBuilder)
+    protected function addImageConfiguration(NodeBuilder $nodeBuilder): void
     {
         $nodeBuilder
             ->arrayNode('image_variations')
