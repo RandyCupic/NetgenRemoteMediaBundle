@@ -41,10 +41,14 @@ class RemoteMediaHandler extends Handler
     protected $logger;
 
     /**
-     * Constructor.
+     * RemoteMediaHandler constructor.
      *
-     * @param \Symfony\Component\HttpFoundation\RequestStack
-     * @param \Psr\Log\LoggerInterface $logger
+     * @param \eZ\Publish\Core\Helper\FieldHelper $fieldHelper
+     * @param \eZ\Publish\Core\Helper\TranslationHelper $translationHelper
+     * @param \Netgen\Bundle\RemoteMediaBundle\RemoteMedia\RemoteMediaProvider $provider
+     * @param \eZ\Publish\API\Repository\ContentTypeService $contentTypeService
+     * @param \Symfony\Component\HttpFoundation\RequestStack $requestStack
+     * @param \Psr\Log\LoggerInterface|null $logger
      */
     public function __construct(
         FieldHelper $fieldHelper,
@@ -62,27 +66,12 @@ class RemoteMediaHandler extends Handler
         $this->logger = $logger instanceof LoggerInterface ? $logger : new NullLogger();
     }
 
-    /**
-     * Returns if this field type handler supports current field.
-     *
-     * @return bool
-     */
-    protected function supports(Field $field)
+    protected function supports(Field $field): bool
     {
         return $field->value instanceof Value;
     }
 
-    /**
-     * Returns the field value, converted to string.
-     *
-     * @param string $tagName
-     *
-     * @throws FieldEmptyException
-     * @throws InvalidArgumentException
-     *
-     * @return string
-     */
-    protected function getFieldValue(Field $field, $tagName, array $params = [])
+    protected function getFieldValue(Field $field, string $tagName, array $params = []): string
     {
         if ($this->fieldHelper->isFieldEmpty($this->content, $params[0])) {
             throw new FieldEmptyException($field->fieldDefIdentifier);
@@ -111,14 +100,7 @@ class RemoteMediaHandler extends Handler
         throw new FieldEmptyException($field->fieldDefIdentifier);
     }
 
-    /**
-     * Returns fallback value.
-     *
-     * @param string $tagName
-     *
-     * @return string
-     */
-    protected function getFallbackValue($tagName, array $params = [])
+    protected function getFallbackValue(string $tagName, array $params = []): string
     {
         if (!empty($params[2]) && ($request = $this->requestStack->getCurrentRequest()) !== null) {
             return $request->getUriForPath('/' . \ltrim($params[2], '/'));
