@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Netgen\Bundle\RemoteMediaBundle\Core\FieldType\RemoteMedia;
 
-use EzSystems\RepositoryForms\Data\Content\FieldData;
-use EzSystems\RepositoryForms\Data\FieldDefinitionData;
+use EzSystems\EzPlatformContentForms\Data\Content\FieldData;
+use EzSystems\EzPlatformAdminUi\Form\Data\FieldDefinitionData;
 use EzSystems\RepositoryForms\FieldType\FieldDefinitionFormMapperInterface;
 use EzSystems\RepositoryForms\FieldType\FieldValueFormMapperInterface;
 use Netgen\Bundle\RemoteMediaBundle\Form\FieldType\RemoteMediaFieldType;
@@ -32,7 +32,7 @@ class FormMapper implements FieldDefinitionFormMapperInterface, FieldValueFormMa
             );
     }
 
-    public function mapFieldDefinitionForm(FormInterface $fieldDefinitionForm, FieldDefinitionData $data)
+    public function mapFieldDefinitionForm(FormInterface $fieldDefinitionForm, FieldDefinitionData $data): void
     {
     }
 }
