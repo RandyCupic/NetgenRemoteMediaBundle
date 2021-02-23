@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Netgen\Bundle\RemoteMediaBundle\Templating\Twig\Extension;
 
 use eZ\Publish\API\Repository\Values\Content\Field;
+use Twig\Extension\AbstractExtension;
+use Twig\TwigFilter;
 use Twig_Filter;
 use eZ\Publish\API\Repository\ContentTypeService;
 use eZ\Publish\API\Repository\Values\Content\Content;
@@ -14,41 +16,43 @@ use Netgen\Bundle\RemoteMediaBundle\Core\FieldType\RemoteMedia\Variation;
 use Netgen\Bundle\RemoteMediaBundle\RemoteMedia\Helper;
 use Netgen\Bundle\RemoteMediaBundle\RemoteMedia\RemoteMediaProvider;
 use Netgen\Bundle\RemoteMediaBundle\RemoteMedia\VariationResolver;
-use Twig_Extension;
-use Twig_SimpleFunction;
+use Twig\TwigFunction;
 
-class NetgenRemoteMediaExtension extends Twig_Extension
+final class NetgenRemoteMediaExtension extends AbstractExtension
 {
     /**
      * @var \Netgen\Bundle\RemoteMediaBundle\RemoteMedia\RemoteMediaProvider
      */
-    protected $provider;
+    private $provider;
 
     /**
      * @var \eZ\Publish\Core\Helper\TranslationHelper
      */
-    protected $translationHelper;
+    private $translationHelper;
 
     /**
      * @var \eZ\Publish\API\Repository\ContentTypeService
      */
-    protected $contentTypeService;
+    private $contentTypeService;
 
     /**
      * @var \Netgen\Bundle\RemoteMediaBundle\RemoteMedia\Helper
      */
-    protected $helper;
+    private $helper;
 
     /**
      * @var \Netgen\Bundle\RemoteMediaBundle\RemoteMedia\VariationResolver
      */
-    protected $variationResolver;
+    private $variationResolver;
 
     /**
      * NetgenRemoteMediaExtension constructor.
      *
-     * @param \Netgen\Bundle\RemoteMediaBundle\RemoteMedia\Helper
-     * @param \Netgen\Bundle\RemoteMediaBundle\RemoteMedia\VariationResolver
+     * @param \Netgen\Bundle\RemoteMediaBundle\RemoteMedia\RemoteMediaProvider $provider
+     * @param \eZ\Publish\Core\Helper\TranslationHelper $translationHelper
+     * @param \eZ\Publish\API\Repository\ContentTypeService $contentTypeService
+     * @param \Netgen\Bundle\RemoteMediaBundle\RemoteMedia\Helper $helper
+     * @param \Netgen\Bundle\RemoteMediaBundle\RemoteMedia\VariationResolver $variationResolver
      */
     public function __construct(
         RemoteMediaProvider $provider,
@@ -64,66 +68,51 @@ class NetgenRemoteMediaExtension extends Twig_Extension
         $this->variationResolver = $variationResolver;
     }
 
-    /**
-     * Returns the name of the extension.
-     *
-     * @return string The extension name
-     */
-    public function getName()
-    {
-        return 'netgen_remote_media';
-    }
-
-    public function getFilters()
+    public function getFilters(): array
     {
         return [
-            new Twig_Filter(
+            new TwigFilter(
                 'scaling_format',
                 [$this, 'scalingFormat']
             ),
         ];
     }
 
-    /**
-     * Returns a list of functions to add to the existing list.
-     *
-     * @return array An array of functions
-     */
-    public function getFunctions()
+    public function getFunctions(): array
     {
         return [
-            new Twig_SimpleFunction(
+            new TwigFunction(
                 'netgen_remote_variation',
                 [$this, 'getRemoteImageVariation']
             ),
-            new Twig_SimpleFunction(
+            new TwigFunction(
                 'netgen_remote_video',
                 [$this, 'getRemoteVideoTag']
             ),
-            new Twig_SimpleFunction(
+            new TwigFunction(
                 'netgen_remote_video_thumbnail',
                 [$this, 'getVideoThumbnail']
             ),
-            new Twig_SimpleFunction(
+            new TwigFunction(
                 'netgen_remote_download',
                 [$this, 'getResourceDownloadLink']
             ),
-            new Twig_SimpleFunction(
+            new TwigFunction(
                 'netgen_remote_media',
                 [$this, 'getRemoteResource']
             ),
-            new Twig_SimpleFunction(
+            new TwigFunction(
                 'ngrm_is_croppable',
                 [$this, 'contentTypeIsCroppable']
             ),
-            new Twig_SimpleFunction(
+            new TwigFunction(
                 'ngrm_available_variations',
                 [$this, 'variationsForContent']
             ),
         ];
     }
 
-    public function scalingFormat(array $variations)
+    public function scalingFormat(array $variations): array
     {
         if (empty($variations)) {
             return $variations;
@@ -148,12 +137,12 @@ class NetgenRemoteMediaExtension extends Twig_Extension
      * Returns variation by specified format.
      *
      * @param string $fieldIdentifier
-     * @param string $format
+     * @param string|array $format
      * @param bool $secure
      *
      * @return \Netgen\Bundle\RemoteMediaBundle\Core\FieldType\RemoteMedia\Variation
      */
-    public function getRemoteImageVariation(Content $content, $fieldIdentifier, $format, $secure = true)
+    public function getRemoteImageVariation(Content $content, string $fieldIdentifier, $format, bool $secure = true): Variation
     {
         $field = $this->translationHelper->getTranslatedField($content, $fieldIdentifier);
         $contentTypeIdentifier = $this->contentTypeService->loadContentType($content->contentInfo->contentTypeId)->identifier;
@@ -165,11 +154,11 @@ class NetgenRemoteMediaExtension extends Twig_Extension
      * Generates html5 video tag for the video with provided id.
      *
      * @param string $fieldIdentifier
-     * @param string $format
+     * @param string|array $format
      *
-     * @return mixed
+     * @return string
      */
-    public function getRemoteVideoTag(Content $content, $fieldIdentifier, $format = '')
+    public function getRemoteVideoTag(Content $content, string $fieldIdentifier, $format = ''): string
     {
         $field = $this->translationHelper->getTranslatedField($content, $fieldIdentifier);
         $contentTypeIdentifier = $this->contentTypeService->loadContentType($content->contentInfo->contentTypeId)->identifier;
@@ -184,7 +173,7 @@ class NetgenRemoteMediaExtension extends Twig_Extension
      *
      * @return string
      */
-    public function getVideoThumbnail(Value $value, ?array $options = [])
+    public function getVideoThumbnail(Value $value, ?array $options = []): string
     {
         return $this->provider->getVideoThumbnail($value, $options);
     }
@@ -194,7 +183,7 @@ class NetgenRemoteMediaExtension extends Twig_Extension
      *
      * @return string
      */
-    public function getResourceDownloadLink(Value $value)
+    public function getResourceDownloadLink(Value $value): string
     {
         return $this->provider->generateDownloadLink($value);
     }
@@ -202,11 +191,11 @@ class NetgenRemoteMediaExtension extends Twig_Extension
     /**
      * Creates variation directly form Value, without the need for Content.
      *
-     * @param $format
+     * @param string|array $format
      *
-     * @return Variation
+     * @return \Netgen\Bundle\RemoteMediaBundle\Core\FieldType\RemoteMedia\Variation
      */
-    public function getRemoteResource(Value $value, $format)
+    public function getRemoteResource(Value $value, $format): Variation
     {
         return $this->provider->buildVariation($value, 'custom', $format, true);
     }
@@ -216,7 +205,7 @@ class NetgenRemoteMediaExtension extends Twig_Extension
      *
      * @return bool
      */
-    public function contentTypeIsCroppable(Content $content)
+    public function contentTypeIsCroppable(Content $content): bool
     {
         $contentTypeIdentifier = $this->contentTypeService->loadContentType(
             $content->contentInfo->contentTypeId
@@ -229,11 +218,12 @@ class NetgenRemoteMediaExtension extends Twig_Extension
      * Returns the list of available variations for the given content.
      * If second parameter is true, it will return only variations with crop configuration.
      *
-     * @param $onlyCroppable
+     * @param string $contentTypeIdentifier
+     * @param bool $onlyCroppable
      *
      * @return array
      */
-    public function variationsForContent($contentTypeIdentifier, $onlyCroppable = false)
+    public function variationsForContent(string $contentTypeIdentifier, bool $onlyCroppable = false): array
     {
         if ($contentTypeIdentifier instanceof Content) {
             $contentTypeIdentifier = $this->contentTypeService->loadContentType(
