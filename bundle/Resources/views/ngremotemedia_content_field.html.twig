@@ -1,8 +1,6 @@
 {% block field_attributes %}
-    {% spaceless %}
-        {% set attr = attr|default( {} ) %}
-        {% for attrname, attrvalue in attr %}{{ attrname }}="{{ attrvalue }}" {% endfor %}
-    {% endspaceless %}
+    {% set attr = attr|default( {} ) %}
+    {% for attrname, attrvalue in attr %}{{ attrname }}="{{ attrvalue }}" {% endfor %}
 {% endblock %}
 
 {##
