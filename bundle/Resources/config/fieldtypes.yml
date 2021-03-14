@@ -16,6 +16,7 @@ services:
             - "@ezpublish.api.service.content"
             - "@netgen_remote_media.provider"
             - "@ezpublish.api.service.field_type"
+            - "@ezpublish.fieldType.ngremotemedia.storage_gateway"
         calls:
             - [setDeleteUnused, ["%netgen_remote_media.remove_unused_resources%"]]
         tags:
@@ -23,6 +24,8 @@ services:
 
     ezpublish.fieldType.ngremotemedia.storage_gateway:
         class: Netgen\Bundle\RemoteMediaBundle\Core\FieldType\RemoteMedia\RemoteMediaStorage\Gateway\LegacyStorage
+        arguments:
+            - "@ezpublish.api.search_engine.legacy.connection"
         tags:
             - {name: ezpublish.fieldType.externalStorageHandler.gateway, alias: ngremotemedia, identifier: LegacyStorage}
 

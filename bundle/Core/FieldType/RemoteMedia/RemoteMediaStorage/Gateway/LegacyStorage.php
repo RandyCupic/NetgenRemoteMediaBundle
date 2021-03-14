@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Netgen\Bundle\RemoteMediaBundle\Core\FieldType\RemoteMedia\RemoteMediaStorage\Gateway;
 
 use Countable;
-use eZ\Publish\Core\Persistence\Database\DatabaseHandler;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\ParameterType;
 use eZ\Publish\SPI\Persistence\Content\VersionInfo;
 use Netgen\Bundle\RemoteMediaBundle\Core\FieldType\RemoteMedia\RemoteMediaStorage\Gateway;
 use PDO;
@@ -16,27 +17,12 @@ class LegacyStorage extends Gateway
     /**
      * Connection.
      *
-     * @var \eZ\Publish\Core\Persistence\Database\DatabaseHandler
+     * @var \Doctrine\DBAL\Connection
      */
     protected $connection;
 
-    /**
-     * Sets the data storage connection to use.
-     *
-     * @param \eZ\Publish\Core\Persistence\Database\DatabaseHandler $connection
-     *
-     * @throws \RuntimeException if $connection is not an instance of
-     *                           {@link \eZ\Publish\Core\Persistence\Database\DatabaseHandler}
-     */
-    public function setConnection($connection)
+    public function __construct(Connection $connection)
     {
-        // This obviously violates the Liskov substitution Principle, but with
-        // the given class design there is no sane other option. Actually the
-        // dbHandler *should* be passed to the constructor, and there should
-        // not be the need to post-inject it.
-        if (!$connection instanceof DatabaseHandler) {
-            throw new RuntimeException('Invalid connection passed');
-        }
         $this->connection = $connection;
     }
 
@@ -53,69 +39,83 @@ class LegacyStorage extends Gateway
     {
         $connection = $this->getConnection();
 
-        $selectQuery = $connection->createSelectQuery();
-        $selectQuery
-            ->selectDistinct($connection->quoteColumn('resource_id'))
-            ->from($connection->quoteTable('ngremotemedia_field_link'))
+        $query = $connection->createQueryBuilder();
+        $query
+            ->select($connection->quoteIdentifier('resource_id'))
+            ->from($connection->quoteIdentifier('ngremotemedia_field_link'))
             ->where(
-                $selectQuery->expr->eq(
-                    $connection->quoteColumn('field_id'),
-                    $selectQuery->bindValue($fieldId, null, PDO::PARAM_INT)
+                $query->expr()->eq(
+                    $connection->quoteIdentifier('field_id'),
+                    ':fieldId'
                 ),
-                $selectQuery->expr->eq(
-                    $connection->quoteColumn('version'),
-                    $selectQuery->bindValue($version, null, PDO::PARAM_INT)
+                $query->expr()->eq(
+                    $connection->quoteIdentifier('version'),
+                    ':version'
                 ),
-                $selectQuery->expr->eq(
-                    $connection->quoteColumn('provider'),
-                    $selectQuery->bindValue($providerIdentifier, null, PDO::PARAM_STR)
+                $query->expr()->eq(
+                    $connection->quoteIdentifier('provider'),
+                    ':provider'
                 )
-            );
-        $statement = $selectQuery->prepare();
-        $statement->execute();
+            )
+            ->setParameter('fieldId', $fieldId, ParameterType::INTEGER)
+            ->setParameter('version', $version, ParameterType::INTEGER)
+            ->setParameter('provider', $providerIdentifier, ParameterType::STRING)
+            ->distinct();
+
+        $statement = $query->execute();
 
         $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
 
         if ((is_array($rows) || $rows instanceof Countable ? \count($rows) : 0) > 0) {
-            $updateQuery = $connection->createUpdateQuery();
-            $updateQuery
+            $query = $connection->createQueryBuilder();
+            $query
                 ->update('ngremotemedia_field_link')
                 ->set(
-                    $connection->quoteColumn('resource_id'),
-                    $updateQuery->bindValue($resourceId, null, PDO::PARAM_STR)
+                    $connection->quoteIdentifier('resource_id'),
+                    ':resourceId'
                 )
                 ->where(
-                    $updateQuery->expr->eq(
-                        $connection->quoteColumn('field_id'),
-                        $updateQuery->bindValue($fieldId, null, PDO::PARAM_INT)
+                    $query->expr()->eq(
+                        $connection->quoteIdentifier('field_id'),
+                        ':fieldId'
                     ),
-                    $updateQuery->expr->eq(
-                        $connection->quoteColumn('version'),
-                        $updateQuery->bindValue($version, null, PDO::PARAM_INT)
+                    $query->expr()->eq(
+                        $connection->quoteIdentifier('version'),
+                        ':version'
                     )
-                );
-            $updateQuery->prepare()->execute();
+                )
+                ->setParameter('resourceId', $resourceId, ParameterType::STRING)
+                ->setParameter('fieldId', $fieldId, ParameterType::INTEGER)
+                ->setParameter('version', $version, ParameterType::INTEGER);
+
+            $query->execute();
         } else {
-            $insertQuery = $connection->createInsertQuery();
-            $insertQuery
-                ->insertInto($connection->quoteTable('ngremotemedia_field_link'))
+            $query = $connection->createQueryBuilder();
+            $query
+                ->insert($connection->quoteIdentifier('ngremotemedia_field_link'))
                 ->set(
-                    $connection->quoteColumn('contentobject_id'),
-                    $insertQuery->bindValue($contentId, null, PDO::PARAM_INT)
+                    $connection->quoteIdentifier('contentobject_id'),
+                    ':contentId'
                 )->set(
-                    $connection->quoteColumn('field_id'),
-                    $insertQuery->bindValue($fieldId, null, PDO::PARAM_INT)
+                    $connection->quoteIdentifier('field_id'),
+                    ':fieldId'
                 )->set(
-                    $connection->quoteColumn('version'),
-                    $insertQuery->bindValue($version, null, PDO::PARAM_INT)
+                    $connection->quoteIdentifier('version'),
+                    ':version'
                 )->set(
-                    $connection->quoteColumn('resource_id'),
-                    $insertQuery->bindValue($resourceId, null, PDO::PARAM_STR)
+                    $connection->quoteIdentifier('resource_id'),
+                    ':resourceId'
                 )->set(
-                    $connection->quoteColumn('provider'),
-                    $insertQuery->bindValue($providerIdentifier, null, PDO::PARAM_STR)
-                );
-            $insertQuery->prepare()->execute();
+                    $connection->quoteIdentifier('provider'),
+                    ':provider'
+                )
+                ->setParameter('contentId', $contentId, ParameterType::INTEGER)
+                ->setParameter('fieldId', $fieldId, ParameterType::INTEGER)
+                ->setParameter('version', $version, ParameterType::INTEGER)
+                ->setParameter('resourceId', $resourceId, ParameterType::STRING)
+                ->setParameter('provider', $providerIdentifier, ParameterType::STRING);
+
+            $query->execute();
         }
     }
 
@@ -148,29 +148,33 @@ class LegacyStorage extends Gateway
     public function deleteFieldData($contentId, $fieldId, $versionNo, $providerIdentifier)
     {
         $connection = $this->getConnection();
-        $query = $connection->createDeleteQuery();
+        $query = $connection->createQueryBuilder();
         $query
-            ->deleteFrom($connection->quoteTable('ngremotemedia_field_link'))
+            ->delete($connection->quoteIdentifier('ngremotemedia_field_link'))
             ->where(
-                $query->expr->eq(
-                    $connection->quoteColumn('field_id'),
-                    $query->bindValue($fieldId, null, PDO::PARAM_INT)
+                $query->expr()->eq(
+                    $connection->quoteIdentifier('field_id'),
+                    ':fieldId'
                 ),
-                $query->expr->eq(
-                    $connection->quoteColumn('contentobject_id'),
-                    $query->bindValue($contentId, null, PDO::PARAM_INT)
+                $query->expr()->eq(
+                    $connection->quoteIdentifier('contentobject_id'),
+                    ':contentId'
                 ),
-                $query->expr->eq(
-                    $connection->quoteColumn('version'),
-                    $query->bindValue($versionNo, null, PDO::PARAM_INT)
+                $query->expr()->eq(
+                    $connection->quoteIdentifier('version'),
+                    ':version'
                 ),
-                $query->expr->eq(
-                    $connection->quoteColumn('provider'),
-                    $query->bindValue($providerIdentifier, null, PDO::PARAM_STR)
+                $query->expr()->eq(
+                    $connection->quoteIdentifier('provider'),
+                    ':provider'
                 )
-            );
+            )
+            ->setParameter('fieldId', $fieldId, ParameterType::INTEGER)
+            ->setParameter('contentId', $contentId, ParameterType::INTEGER)
+            ->setParameter('version', $versionNo, ParameterType::INTEGER)
+            ->setParameter('provider', $providerIdentifier, ParameterType::STRING);
 
-        $query->prepare()->execute();
+        $query->execute();
     }
 
     /**
@@ -186,32 +190,36 @@ class LegacyStorage extends Gateway
     public function loadFromTable($contentId, $fieldId, $versionNo, $providerIdentifier)
     {
         $connection = $this->getConnection();
-        $selectQuery = $connection->createSelectQuery();
 
-        $selectQuery
-            ->selectDistinct($connection->quoteColumn('resource_id'))
-            ->from($connection->quoteTable('ngremotemedia_field_link'))
+        $query = $connection->createQueryBuilder();
+        $query
+            ->select($connection->quoteIdentifier('resource_id'))
+            ->from($connection->quoteIdentifier('ngremotemedia_field_link'))
             ->where(
-                $selectQuery->expr->eq(
-                    $connection->quoteColumn('field_id'),
-                    $selectQuery->bindValue($fieldId, null, PDO::PARAM_INT)
+                $query->expr()->eq(
+                    $connection->quoteIdentifier('field_id'),
+                    ':fieldId'
                 ),
-                $selectQuery->expr->eq(
-                    $connection->quoteColumn('contentobject_id'),
-                    $selectQuery->bindValue($contentId, null, PDO::PARAM_INT)
+                $query->expr()->eq(
+                    $connection->quoteIdentifier('contentobject_id'),
+                    ':contentId'
                 ),
-                $selectQuery->expr->eq(
-                    $connection->quoteColumn('version'),
-                    $selectQuery->bindValue($versionNo, null, PDO::PARAM_INT)
+                $query->expr()->eq(
+                    $connection->quoteIdentifier('version'),
+                    ':version'
                 ),
-                $selectQuery->expr->eq(
-                    $connection->quoteColumn('provider'),
-                    $selectQuery->bindValue($providerIdentifier, null, PDO::PARAM_STR)
+                $query->expr()->eq(
+                    $connection->quoteIdentifier('provider'),
+                    ':provider'
                 )
-            );
+            )
+            ->setParameter('fieldId', $fieldId, ParameterType::INTEGER)
+            ->setParameter('contentId', $contentId, ParameterType::INTEGER)
+            ->setParameter('version', $versionNo, ParameterType::INTEGER)
+            ->setParameter('provider', $providerIdentifier, ParameterType::STRING)
+            ->distinct();
 
-        $statement = $selectQuery->prepare();
-        $statement->execute();
+        $statement = $query->execute();
 
         $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
 
@@ -234,24 +242,28 @@ class LegacyStorage extends Gateway
     public function remoteResourceConnected($resourceId, $providerIdentifier)
     {
         $connection = $this->getConnection();
-        $selectQuery = $connection->createSelectQuery();
-        $selectQuery
-            ->selectDistinct($connection->quoteColumn('resource_id'))
-            ->from($connection->quoteTable('ngremotemedia_field_link'))
-            ->where(
-                $selectQuery->expr->eq(
-                    $connection->quoteColumn('resource_id'),
-                    $selectQuery->bindValue($resourceId, null, PDO::PARAM_STR)
-                ),
-                $selectQuery->expr->eq(
-                    $connection->quoteColumn('provider'),
-                    $selectQuery->bindValue($providerIdentifier, null, PDO::PARAM_STR)
-                )
-            );
-        $statement = $selectQuery->prepare();
-        $statement->execute();
 
+        $query = $connection->createQueryBuilder();
+        $query
+            ->select($connection->quoteIdentifier('resource_id'))
+            ->from($connection->quoteIdentifier('ngremotemedia_field_link'))
+            ->where(
+                $query->expr()->eq(
+                    $connection->quoteIdentifier('resource_id'),
+                    ':resourceId'
+                ),
+                $query->expr()->eq(
+                    $connection->quoteIdentifier('provider'),
+                    ':provider'
+                )
+            )
+            ->setParameter('resourceId', $resourceId, ParameterType::STRING)
+            ->setParameter('provider', $providerIdentifier, ParameterType::STRING)
+            ->distinct();
+
+        $statement = $query->execute();
         $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
+
         return (is_array($rows) || $rows instanceof Countable ? \count($rows) : 0) > 0;
     }
 
@@ -260,7 +272,7 @@ class LegacyStorage extends Gateway
      *
      * @throws \RuntimeException if no connection has been set, yet
      *
-     * @return \eZ\Publish\Core\Persistence\Database\DatabaseHandler
+     * @return \Doctrine\DBAL\Connection
      */
     protected function getConnection()
     {

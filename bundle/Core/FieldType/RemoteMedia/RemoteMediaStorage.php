@@ -6,7 +6,8 @@ namespace Netgen\Bundle\RemoteMediaBundle\Core\FieldType\RemoteMedia;
 
 use eZ\Publish\API\Repository\ContentService;
 use eZ\Publish\API\Repository\FieldTypeService;
-use eZ\Publish\Core\FieldType\GatewayBasedStorage;
+use eZ\Publish\SPI\FieldType\GatewayBasedStorage;
+use eZ\Publish\SPI\FieldType\StorageGateway;
 use eZ\Publish\SPI\Persistence\Content\Field;
 use eZ\Publish\SPI\Persistence\Content\VersionInfo;
 use Netgen\Bundle\RemoteMediaBundle\RemoteMedia\RemoteMediaProvider;
@@ -38,13 +39,13 @@ class RemoteMediaStorage extends GatewayBasedStorage
         ContentService $contentService,
         RemoteMediaProvider $provider,
         FieldTypeService $fieldTypeService,
-        array $gateways = []
+        StorageGateway $gateway
     ) {
         $this->contentService = $contentService;
         $this->provider = $provider;
         $this->fieldTypeService = $fieldTypeService;
 
-        parent::__construct($gateways);
+        parent::__construct($gateway);
     }
 
     public function setDeleteUnused($deleteUnused = false)
@@ -61,13 +62,10 @@ class RemoteMediaStorage extends GatewayBasedStorage
     {
         $data = $field->value->externalData;
 
-        /** @var \Netgen\Bundle\RemoteMediaBundle\Core\FieldType\RemoteMedia\RemoteMediaStorage\Gateway $gateway */
-        $gateway = $this->getGateway($context);
-
         $emptyValue = $this->fieldTypeService->getFieldType('ngremotemedia')->getEmptyValue();
 
         if ($data instanceof Value && $data != $emptyValue) {
-            $gateway->storeFieldData(
+            $this->gateway->storeFieldData(
                 $field->id,
                 $data->resourceId,
                 $versionInfo->contentInfo->id,
@@ -84,7 +82,7 @@ class RemoteMediaStorage extends GatewayBasedStorage
             $value->variations = $data['variations'];
 
             $field->value->data = $value;
-            $gateway->storeFieldData(
+            $this->gateway->storeFieldData(
                 $field->id,
                 $value->resourceId,
                 $versionInfo->contentInfo->id,
@@ -119,8 +117,6 @@ class RemoteMediaStorage extends GatewayBasedStorage
         $content = $this->contentService->loadContent($versionInfo->contentInfo->id, null, $versionNo);
         $fields = $content->getFields();
 
-        $gateway = $this->getGateway($context);
-
         if ($this->deleteUnused) {
             $resourceIdsToDelete = [];
             foreach ($fields as $field) {
@@ -128,17 +124,17 @@ class RemoteMediaStorage extends GatewayBasedStorage
                     // load resource_id from table
                     $resourceIdsToDelete = \array_merge(
                         $resourceIdsToDelete,
-                        $gateway->loadFromTable($content->id, $field->id, $versionNo, $this->provider->getIdentifier())
+                        $this->gateway->loadFromTable($content->id, $field->id, $versionNo, $this->provider->getIdentifier())
                     );
 
                     // delete for current version
-                    $gateway->deleteFieldData($content->id, $field->id, $versionNo, $this->provider->getIdentifier());
+                    $this->gateway->deleteFieldData($content->id, $field->id, $versionNo, $this->provider->getIdentifier());
                 }
             }
 
             foreach ($resourceIdsToDelete as $resourceId) {
                 // check if resource_id is used anywhere else
-                if (!$gateway->remoteResourceConnected($resourceId, $this->provider->getIdentifier())) {
+                if (!$this->gateway->remoteResourceConnected($resourceId, $this->provider->getIdentifier())) {
                     // delete from remote provider
                     $this->provider->deleteResource($resourceId);
                 }
@@ -150,7 +146,7 @@ class RemoteMediaStorage extends GatewayBasedStorage
                     continue;
                 }
 
-                $gateway->deleteFieldData($content->id, $field->id, $versionNo, $this->provider->getIdentifier());
+                $this->gateway->deleteFieldData($content->id, $field->id, $versionNo, $this->provider->getIdentifier());
             }
         }
     }
