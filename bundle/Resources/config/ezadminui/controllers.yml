@@ -1,11 +1,13 @@
 services:
     netgen_remote_media.controllers.ezadminui.facets.list:
         class: Netgen\Bundle\RemoteMediaBundle\Controller\EzAdminUI\Facets\ListController
+        public: true
         arguments:
             - '@netgen_remote_media.provider'
 
     netgen_remote_media.controllers.ezadminui.browse:
         class: Netgen\Bundle\RemoteMediaBundle\Controller\EzAdminUI\BrowseController
+        public: true
         arguments:
             - '@netgen_remote_media.provider'
             - '@netgen_remote_media.helper'
