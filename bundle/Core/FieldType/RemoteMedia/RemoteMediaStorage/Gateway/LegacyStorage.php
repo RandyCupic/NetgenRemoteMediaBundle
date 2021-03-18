@@ -93,22 +93,13 @@ class LegacyStorage extends Gateway
             $query = $connection->createQueryBuilder();
             $query
                 ->insert($connection->quoteIdentifier('ngremotemedia_field_link'))
-                ->set(
-                    $connection->quoteIdentifier('contentobject_id'),
-                    ':contentId'
-                )->set(
-                    $connection->quoteIdentifier('field_id'),
-                    ':fieldId'
-                )->set(
-                    $connection->quoteIdentifier('version'),
-                    ':version'
-                )->set(
-                    $connection->quoteIdentifier('resource_id'),
-                    ':resourceId'
-                )->set(
-                    $connection->quoteIdentifier('provider'),
-                    ':provider'
-                )
+                ->values([
+                    $connection->quoteIdentifier('contentobject_id') => ':contentId',
+                    $connection->quoteIdentifier('field_id') => ':fieldId',
+                    $connection->quoteIdentifier('version') => ':version',
+                    $connection->quoteIdentifier('resource_id') => ':resourceId',
+                    $connection->quoteIdentifier('provider') => ':provider',
+                ])
                 ->setParameter('contentId', $contentId, ParameterType::INTEGER)
                 ->setParameter('fieldId', $fieldId, ParameterType::INTEGER)
                 ->setParameter('version', $version, ParameterType::INTEGER)
