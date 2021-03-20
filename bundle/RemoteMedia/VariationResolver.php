@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Netgen\Bundle\RemoteMediaBundle\RemoteMedia;
 
+use eZ\Publish\Core\MVC\ConfigResolverInterface;
+
 class VariationResolver
 {
-    protected $variations = [];
-
     /**
-     * Dynamic injection of configured transformations.
-     *
-     * @param array $variations
+     * @var \eZ\Publish\Core\MVC\ConfigResolverInterface
      */
-    public function setVariations($variations = [])
+    private $configResolver;
+
+    public function __construct(ConfigResolverInterface $configResolver)
     {
-        $this->variations = $variations;
+        $this->configResolver = $configResolver;
     }
 
     /**
@@ -27,8 +27,10 @@ class VariationResolver
      */
     public function getVariationsForContentType($contentTypeIdentifier)
     {
-        $defaultVariations = $this->variations['default'] ?? [];
-        $contentTypeVariations = $this->variations[$contentTypeIdentifier] ?? [];
+        $variations = $this->configResolver->getParameter('image_variations', 'netgen_remote_media');
+
+        $defaultVariations = $variations['default'] ?? [];
+        $contentTypeVariations = $variations[$contentTypeIdentifier] ?? [];
 
         return \array_merge($defaultVariations, $contentTypeVariations);
     }
@@ -61,7 +63,8 @@ class VariationResolver
      */
     public function getEmbedVariations()
     {
-        $variations = $this->variations['embedded'] ?? [];
+        $variations = $this->configResolver->getParameter('image_variations', 'netgen_remote_media');
+        $variations = $variations['embedded'] ?? [];
 
         $croppableVariations = [];
         foreach ($variations as $variationName => $variationOptions) {
