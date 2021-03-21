@@ -88,3 +88,9 @@ services:
         lazy: true
         tags:
             - { name: netgen_remote_media.transformation_handler, alias: transformation, provider: cloudinary }
+
+    netgen_remote_media.handler.cloudinary.background:
+        class: Netgen\Bundle\RemoteMediaBundle\RemoteMedia\Provider\Cloudinary\TransformationHandler\Background
+        lazy: true
+        tags:
+            - { name: netgen_remote_media.transformation_handler, alias: background, provider: cloudinary }

@@ -2,6 +2,7 @@ Table of supported transformations from Cloudinary.
 
 | Transformation name | Transformation alias | Description |
 |:-------------------:|:--------------------:|:-----------:|
+| Background | background | Sets the background color of the image which will be visible when eg. setting the overlay of the image.
 | Crop | crop | Crops the image if it has been cropped in the administration interface |
 | Effect | effect | Applies the effect to change the visual appearance |
 | Fill | fill | Exact given width and height while retaining the original aspect ratio, using only part of the image that fills the given dimensions if necessary |
