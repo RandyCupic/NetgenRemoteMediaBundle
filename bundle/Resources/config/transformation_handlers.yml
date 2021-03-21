@@ -94,3 +94,9 @@ services:
         lazy: true
         tags:
             - { name: netgen_remote_media.transformation_handler, alias: background, provider: cloudinary }
+
+    netgen_remote_media.handler.cloudinary.opacity:
+        class: Netgen\Bundle\RemoteMediaBundle\RemoteMedia\Provider\Cloudinary\TransformationHandler\Opacity
+        lazy: true
+        tags:
+            - { name: netgen_remote_media.transformation_handler, alias: opacity, provider: cloudinary }

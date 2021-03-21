@@ -14,6 +14,7 @@ Table of supported transformations from Cloudinary.
 | Mfit | mfit | Same as the fit mode but only if the original image is smaller than the given minimum (width and height), in which case the image is scaled up. All of the original image is visible. |
 | Mpad | mpad | Same as the pad mode but only if the original image is smaller than the given minimum (width and height), in which case the image is scaled up to fill the given width and height while retaining the original aspect ratio and with all of the original image visible. You can also specify the color of the background in the case that padding is added. |
 | Named transformation | transformation | A named transformation is a set of image transformations that has been given a custom name for easy reference. |
+| Opacity | opacity | Sets the opacity of the image (a parameter from 0 to 100).
 | Pad | pad | Resize the image to fill the given width and height while retaining the original aspect ratio and with all of the original image visible. If the proportions of the original image do not match the given width and height, padding is added to the image to reach the required size. You can also specify the color of the background in the case that padding is added. |
 | Quality | quality |  Set compression level to apply to an image as a value between 1 (smallest file size possible) and 100 (best visual quality). Automatic quality selection is also available |
 | Resize | resize | Change the size of the image |
